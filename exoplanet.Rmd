@@ -1,0 +1,310 @@
+---
+title: "Exoplanets"
+author: "Valeriu Tocitu"
+date: "August 22, 2016"
+output: html_document
+---
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+setwd("C:/rwork")
+getwd
+library(ggplot2)
+library(dplyr)
+```
+# Univariate Plots
+## What is the structure of your dataset?
+There are 5427 different exoplanets in this dataset with 8 features. 
+
+NAME: The name of the planet
+
+Mass (mjupiter): This represents the mass of the planet as a ratio of Jupiter's mass. Due to the early bias of early methods towards Gas Giants, planet mass and radius are given as a ratio of Jupiter's. Due to the large size of Jupiter relative to ALL other planets in the solar system, a logarithmic scale must be used so as not to exclude smaller planets
+
+Radius R (rjupiter): This represents the radius of the planet as a ratio of Jupiter's radius.
+
+Gravity: The gravity on the planet's surface. This is an arbitrary value for Gas Giants,
+
+Period (days): This is how long a "year" is on one of those planets. Very early planets tended to orbit closely to their star, which increased the oscillations favored by the Gravity Method
+
+Rstar (rsun): The smaller the star, the smaller the planet that could be detected.
+
+#### Planet Discovery Methods
+PLANETDISCMETHOD: Method used to discover the planet. This is a category, since there are very few methods used. The methods are as follows
+
+Transit: The planet moving in front of its star causes an eclipse when viewed from Earth and thus the star's luminosity decreases.
+
+Transit Timing Variation: Once a planet has been discovered by the transit method, a decrease in brightness is to be expected at a period of a planet's orbit. If a repeated decrease in brightness occurs outside of that period, it may indicate the presence of a second planet. 
+
+Timing: Other timing methods such as Pulsar Timing (for planets discovered around Pulsars)
+
+Microlensing: The planet's gravity bends the star's light, causing a doppler shift in the starlight.
+
+Radial Velocity (RV): The planet's gravity causes the star to oscillate. By measuring the oscillation, we can approximate the planet's mass, radius, and orbit. This was the earliest method used, and it typically favors larger planets. 
+
+Imaging: The planet was directly imaged. This is a new method at the time the data was collected.
+
+#### Orbital Elements
+The remaining variables are the object's orbital mechanics. Orbits are measured in ellipses around the Sun. We don't care about their actual coordinates, just the shape of the orbit. They are:
+
+Semi-major axis (A): This is defined as the longest diameter of the orbit. This is the farthest distance between the planet and the star, measured in Astronomical Units
+
+Eccentricity (e): This measures how elongated an ellipse is. It has a range of 0 --> 1, where 0 is a perfect circle.
+
+## Plot the count of planet Periods
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+exoplanet <-read.csv('exoplanets.csv', na.strings=c("", "NA"), stringsAsFactors=FALSE, sep = ',')
+dim(exoplanet)
+names(exoplanet)
+summary(exoplanet)
+exoplanet$density <- exoplanet$Mass/exoplanet$R
+qplot(x = Period, data=subset(exoplanet, !is.na(Period)), binwidth = 20)+scale_x_continuous(lim = c(0,1000))
+summary(exoplanet$Period)
+summary(exoplanet$density)
+```
+Most of the planets have a median period of 13.1 days. There are a few outliers which drag the mean out. In addition, 12 do not have a period listed. This is either because we don't know the period, or they are free-floating planets with no orbit
+
+## Plot the number of planet masses as a ratio of Jupiter's
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = Mass, data=subset(exoplanet, !is.na(Mass)), binwidth = 0.1)+scale_x_continuous(lim = c(0,22))+scale_y_continuous(lim = c(0,300))
+summary(exoplanet$Mass)
+```
+Most of the planets have a mass that is about 0.02 times that of Jupiter. Hoever, you have an outlier of 23 times that of Jupiter. There is not enough information to tell whether this lower mass indicates more rocky as opposed to gas worlds.
+
+## Plot the count of various eccentricities
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = Eccentricity, data=subset(exoplanet, !is.na(Eccentricity)), binwidth = 0.0001)+scale_x_continuous(lim = c(0,0.6))+scale_y_continuous(lim = c(0,30))
+summary(exoplanet$Eccentricity)
+```
+As expected from the short period most planets have, eccentricity is very low. There is one planet who's very close to the eccentricity of 1 which indicates that it is being kicked out of the star system.
+
+## Plot the count of the planet's radius as a ratio of the Jupiter's
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = R, data=subset(exoplanet, !is.na(R)), binwidth = 0.1)+scale_x_continuous(lim = c(0,60))+scale_y_continuous(lim = c(0,70))
+summary(exoplanet$R)
+Earth_Jupiter_ratio = 6370/69911
+```
+According to Wikipedia, the ratio between earth and Jupiter is about 0.09. This hints that the planets discovered have a median radius about twice that of Earth. There are outliers, as can be seen by the maximum value.
+
+## Plot the frequency of semi-major axis
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = A, data=subset(exoplanet, !is.na(A)), binwidth = 0.1)+scale_x_continuous(lim = c(0,60))+scale_y_continuous(lim = c(0,20))
+summary(exoplanet$A)
+```
+Earth is 1 au from the Sun. This reinforces the hints given by the Period count. Namely, that most planets listed exist very close to their star.
+
+## Plot the frequency of OM
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = OM, data=subset(exoplanet, !is.na(OM)), binwidth = 1)+scale_x_continuous(lim = c(-150,400))+scale_y_continuous(lim = c(0,10))
+summary(exoplanet$OM)
+```
+To best catch an eclipse, the planet needs to have an OM of +/- 90 degrees. 
+
+## Plot the frequency of planetary gravity
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = Gravity, data=subset(exoplanet, !is.na(Gravity)), binwidth = 0.1)+scale_x_continuous(lim = c(0,5))+scale_y_continuous(lim = c(0,40))
+summary(exoplanet$Gravity)
+```
+
+## Plot the count of the star's radii as a ratio of the Sun's
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = Rstar, data=subset(exoplanet, !is.na(Rstar)), binwidth = 0.01)+scale_x_continuous(lim = c(0,1))+scale_y_continuous(lim = c(0,40))
+summary(exoplanet$Rstar)
+```
+
+# Univariate Analysis
+
+## What data are you interested in
+
+I am interested in the discovery method. I want to see which types of exoplanets are favored by which method of detection
+
+## What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+The planet's orbital inclination and the distance of the star from Earth.
+
+## Did you create any new variables from existing variables in the dataset?
+
+Yes. I calculated the planetary density can be calculated by a ratio of the planet's mass and radius. However, I am not familiar enough with the material to use this to distinguish a gas giant from a rocky world.
+
+# Bivariate Plot
+### Planet's radius vs. the star's radius
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = R, y = Rstar, data=subset(exoplanet, !is.na(R), !is.na(Rstar)))+scale_x_continuous(lim = c(0,60))+scale_y_continuous(lim = c(0,10))
+with(subset(exoplanet, R <= 60, Rstar <= 10), cor.test(R, Rstar))
+```
+This data hints that stars with a smaller radius tend to have smaller planets. Another way of looking at this data would be that we can't detect smaller planets around larger stars, regardless of method used.
+
+### Planet's mass vs. the star's radius
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = Mass, y = Rstar, data=subset(exoplanet, !is.na(Mass), !is.na(Rstar)))+scale_x_continuous(lim = c(0,20))+scale_y_continuous(lim = c(0,10))
+# The planetary massass is 
+summary(exoplanet$Mass)
+# Radius of the star distribution is
+summary(exoplanet$Rstar)
+with(subset(exoplanet, Rstar <= 10), cor.test(Mass, Rstar))
+```
+It is no coincidence that this scatterplot looks very similar to the comparision between the radius of the star and the radius of the planet. After all, planets with smaller radii tend to have less mass, once corrected for density.
+
+### Period vs. the star's radius
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = Period, y = Rstar, data=subset(exoplanet, !is.na(Period), !is.na(Rstar)))+scale_x_continuous(lim = c(0,1000))+scale_y_continuous(lim = c(0,10))
+# The orbital period distribution is
+summary(exoplanet$Period)
+# The star's radius distribution is
+summary(exoplanet$Rstar)
+with(subset(exoplanet, Period <= 50, Rstar <= 10), cor.test(Period, Rstar))
+```
+This scatter plot shows a very weak correlation between the period and the star's radius. This might be due to the fact that most planets documented have been found around stars within a narrow Range of radii. I am not aware whether this is due to a relative lack of stars with larger radii in the explored region of the galaxy, a relative lack of planets around those stars, or simply that the planet discovery methods don't work as well around those stars.
+
+### Planet's eccentricity vs semi-major axis
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = Eccentricity, y = A, data=subset(exoplanet, !is.na(R), !is.na(Rstar)))+scale_x_continuous(lim = c(0,0.2))+scale_y_continuous(lim = c(0,2))
+# The eccentricity distribution is
+summary(exoplanet$Eccentricity)
+# The semi-major axis distribution is
+summary(exoplanet$A)
+with(subset(exoplanet, A <= 10), cor.test(Eccentricity, A))
+```
+
+This data shows that most planetary orbits have no eccentricity, regardless of semi-major axis. At the same time, planets with non-zero eccentricities tend to have smaller semi-major axes. There is not enough data to speculate on the reason this is so. 
+
+### Method of Discovery vs star's radius
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+exoplanet$PLANETDISCMETH[is.na(exoplanet$PLANETDISCMETH)] <- "NA"
+qplot(x = PLANETDISCMETH, y = Rstar, data=droplevels(subset(exoplanet, !is.na(Rstar))))+geom_boxplot()+scale_y_continuous(lim = c(0,3))
+```
+
+There are ony two plents discovered whose star has a radius greater than 50 times that of the sun. All were discovered with microlensing. In order to scale the plot properly, all stars with a radius greater than 10 times that of the sun were removed. All planets discovered around those stars were discovered with the microlensing method.
+
+The median of these methods exists between 1.0 <= Rstar <= 2.0. Unfortunately, I don't have enough information to determine whether this is the natural distribution of planets within the galaxy or whether these stars were predominantly searched for the existence of planets. 
+
+### Method of Discovery vs planet's radius
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = PLANETDISCMETH, y = R, data=subset(exoplanet, !is.na(R)))+geom_boxplot()+scale_y_continuous(lim = c(0,3))
+```
+
+The plot is scaled to remove planets which had a radius greater than 3 times that of Jupiter. All those planets were discovered with the Microlensing method. Since they are outliers even for the Microlensing method, they were ignored to showcase the other methods.
+
+Imaging had the highest median, but that is due to a sample size of 1, and the fact that the technology to directly image a planet doesn't exist for planets with small radii. The RV method was second, but that could be due to the fact that the method favors the detection of larger planets
+
+### Method of Discovery vs planet's mass
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = PLANETDISCMETH, y = Mass, data=subset(exoplanet))+geom_boxplot()
+```
+
+Since the masses of the planets discovered doesn't have nearly as wide a range, there was no need to exclude planets except those whose mass is not known.Since the density of planets varies, it is not advisable to take the mass alone into consideration in exploring biases to the discovery methods. Thus, density is best employed here.
+
+# Bivariate Analysis
+## Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+
+It is difficult to establish correlations between the radius of the star and any orbital or physical properties of the planets in question. Correlations do exist, but they are very weak. Again, it is not possible to determine from this limited data whether this is due to the fact that planets are likely to form around stars with smaller radii, or due to scientist's desire to find an Earth-like planet around a Sun-like star.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+summary(exoplanet$PLANETDISCMETH)
+```
+Most planets do not list the method with which they were discovered. Those that do predominantly were discovered via Radial Velocity. Radial Velocity was the first method used to detect planets, and was for a time the only method used. Most planets to date have been discovered by the Kepler Space Telescope, which uses Microlensing to detect planets. 
+
+The facts above mean that RV was used to discover the widest diversity of planets. However, this is not enough to say that either represents the median of all the planets in the galaxy. Despite its 20 plus year existence, the field of planetary detection is still in its infancy.
+
+## Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+There is no statistically significant relationship between the planet's period and the star's radius.
+
+## What was the strongest relationship you found?
+The strongest relationship was between Eccentricity and semi-major axis. 
+
+# Multivariate Plot
+### Method of Discovery vs. planet's density
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = PLANETDISCMETH, y = density, data=subset(exoplanet, !is.na(density)))+geom_boxplot()+scale_y_continuous(lim = c(0,10))
+```
+
+Most methods were used to detect planets with very low densities. Surprisingly, Imaging and Radial Velocity (RV) have higher desnities. There is not enough information in the data to determine why this phenomenon exists, since it seems to go against the assumption that those methods work better for gas giants. 
+
+### Planet's radius vs. the star's radius with method of discovery
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = R, y = Rstar, color=PLANETDISCMETH, data=subset(exoplanet, !is.na(R), !is.na(Rstar)))+scale_x_continuous(lim = c(0,60))+scale_y_continuous(lim = c(0,10))
+```
+
+We can deduce from this plot that of the planets whose discovery method is specified, we only know both the planet and star radii for those discovered via imaging. That shouldn't be surprising, since we have a direct image to calculate both. 
+
+### Planet's mass vs. the star's radius with method of discovery
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = Mass, y = Rstar, color=PLANETDISCMETH, data=subset(exoplanet, !is.na(Mass), !is.na(Rstar)))+scale_x_continuous(lim = c(0,20))+scale_y_continuous(lim = c(0,10))
+```
+
+From this, we can conclude that the method of discovery for more massive planets is known, but this relationship isn't shown between the star's radius and the method of discovery.
+
+### Period vs. the star's radius with method of discovery
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = Period, y = Rstar, color=PLANETDISCMETH, data=subset(exoplanet, !is.na(Period), !is.na(Rstar)))+scale_x_continuous(lim = c(0,1000))+scale_y_continuous(lim = c(0,10))
+```
+
+The planets with unknown discovery methods are more spread out in terms of both the distribution of Period and Rstar. This hints at the possibility that no discovery method listed favors a specific planetary period. 
+
+### Planet's eccentricity vs semi-major axis with method of discovery
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = Eccentricity, y = A, color=PLANETDISCMETH, data=subset(exoplanet, !is.na(R), !is.na(Rstar)))+scale_x_continuous(lim = c(0,0.2))+scale_y_continuous(lim = c(0,2))
+```
+
+This plot argues that Transit and Timing discovery methods were used to discover planets with known orbital mechanics characteristics. In a way, it is not surprising, since those methods require the knowledge of the planet's orbital variables.
+
+
+# Multivariate Analysis
+
+## Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+The plots taking the methods of discovery into account basically just compare microlensing and radial velocity. The other methods discovered too few planets. Nevertheless, the data was included for the sake of completness. That is why the analysis above compares only those two methods.
+
+Some of the analysis for from the Bivariate Plots was redone using density. A planet's radius is far more telling of its composition than its mass, but density is best to get a glimpse of the relationships that gas giants have with the other parameters. A reminder that the density threshold between a gas giant and a rocky world is not known as part fo this data. Thus, no attempt is made to classify the worlds. 
+
+
+## Were there any interesting or surprising interactions between features?
+
+The fact that planets with the larger eccentricities had the smaller semi-major axes. The closer the planet is to the star, the greater the influence of the star on the planet. High-eccentricity orbits are also theoretically unstable, with the star's "wind" thought to eventually perturb the orbit enough that the planet is more likely to fall into the star. Instead, the opposite relationship is hinted at in this data. 
+
+# Final Plots and Summary
+When it comes to comparing the method of discovery to planetary characteristics, we've found the stronger relationship to be between the planetary radius and method of discovery. The following plots summarize this relationship.
+
+## Frequency of Planet's Radius
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = R, data=subset(exoplanet, !is.na(R)), binwidth = 0.1, main = "Distribution of Planets by the Radii")+scale_x_continuous(lim = c(0,60))+scale_y_continuous(lim = c(0,70))
+```
+
+This plot gives the strongest hint that most of the planets discovered have a smaller radius than twice that of Jupiter. This means that we can treat bigger planets almost as an outlier.
+
+### Method of Discovery vs planet's radius
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = PLANETDISCMETH, y = R, data=subset(exoplanet, !is.na(R)), main = "Discovery method effectiveness for Planets of Various Radii")+geom_boxplot()+scale_y_continuous(lim = c(0,3))
+```
+
+This shows that both methods are similar in terms of the distribution of planets they have discovered. This allows a closer comparison
+
+When it comes to comparing the method of discovery to orbital mechanics, we've found the stronger relationship to be between semi-major axis and method of discovery. The following plots summarize this relationship.
+
+## Frequency of semi-major axis
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = A, data=subset(exoplanet, !is.na(A)), binwidth = 0.1, main = "Distribution of Planets by their Semi-Major Axis")+scale_x_continuous(lim = c(0,5))+scale_y_continuous(lim = c(0,20))
+summary(exoplanet$A)
+```
+
+This plot shows that all planets discovered had a semi-major axis less than 5.0 AU, within Jupiter's orbit.
+
+### Planet's eccentricity vs semi-major axis
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = Eccentricity, y = A, data=subset(exoplanet, !is.na(R), !is.na(Rstar)), main = "The relationship between the Eccentricity and Semi-Major Axis")+scale_x_continuous(lim = c(0,0.2))+scale_y_continuous(lim = c(0,2))
+```
+
+This plot indicates that the higher eccentricities are found in planets with smaller semi-major axes. Since this data doesn't hint at a relationship between the semi-major axis and eccentricity, we can focus on semi-major axis alone. This is backed up by the following plot
+
+### Planet's eccentricity vs semi-major axis with method of discovery
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = Eccentricity, y = A, color=PLANETDISCMETH, data=subset(exoplanet, !is.na(R), !is.na(Rstar)), main = "Method of Discovery based on the relationship between the Eccentricity and Semi-Major Axis")+scale_x_continuous(lim = c(0,0.2))+scale_y_continuous(lim = c(0,2))
+```
+
+This plot argues that Transit and Timing discovery methods were used to discover planets with known orbital mechanics characteristics. In a way, it is not surprising, since those methods require the knowledge of the planet's orbital variables.
+
+# Reflection
+The exoplanet data set contains 5427 different exoplanets. I chose a fraction of the observed characteristics and began by investigating their frequency (there are four different orbital elements). Afterwards, I wanted to see if there were any correlations between different physical properties. I found out that overall, the weakest relationship was between the star's radius and the discovery method while the strongest relationship was between the planet's radius and the discovery method.
+
+Exoplanet detection is still a new field. Thus, the data itself was incomplete. Dispite wanting to investigate all planet discovery methods, I could only really compare microlensing with Radial Velocity. Planetary catalogs are constantly updated as new planets and information about already existing planets becomes available. Thus, any repeats of this analysis will have many more candidates to work with. Who know, there might even be a new planetary discovery method within the next few years?
